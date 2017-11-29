@@ -1,0 +1,59 @@
+{
+  "name": "aniwd",
+  "version": "0.0.1",
+  "description": "Prepare Adobe Animate for DR-Webdok",
+  "license": "MIT",
+  "repository": "drdk/aniwd",
+  "author": {
+    "name": "Sebastiaan Schlappi",
+    "email": "sebs@dr.dk",
+    "url": "about:null"
+  },
+  "bin": "cli.js",
+  "engines": {
+    "node": ">=8"
+  },
+  "scripts": {
+    "test": "xo && ava"
+  },
+  "files": [
+    "cli.js",
+    "index.js"
+  ],
+  "keywords": [
+    "webdok",
+    "dr",
+    "animate",
+    "adobe",
+    "publish"
+  ],
+  "dependencies": {
+    "chalk": "^2.3.0",
+    "cheerio": "^1.0.0-rc.2",
+    "falafel": "^2.1.0",
+    "get-stdin": "^5.0.1",
+    "meow": "^3.7.0",
+    "ncp": "^2.0.0",
+    "prompt": "^1.0.0",
+    "request": "^2.83.0"
+  },
+  "devDependencies": {
+    "ava": "*",
+    "eslint-config-xo-react": "^0.13.0",
+    "eslint-plugin-react": "^7.1.0",
+    "xo": "^0.18.2"
+  },
+  "xo": {
+    "extends": [
+      "xo-react"
+    ],
+    "rules": {
+      "react/prop-types": 0
+    },
+    "settings": {
+      "react": {
+        "pragma": "h"
+      }
+    }
+  }
+}
