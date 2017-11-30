@@ -1,45 +1,27 @@
 #!/usr/bin/env node
 'use strict';
 
-
 // cli include
 const meow = require('meow');
-
 // filesystem access
 const fs = require('fs');
 const currentDir = process.cwd();
-
 // beautiful colors
 const chalk = require('chalk');
-
 // node-jquery
 const cheerio = require('cheerio');
-
 // recursive folder copy
 const ncp = require('ncp');
-
 // urlparser
 const { URL } = require('url');
-
 // traverse the .js file
 const falafel = require('falafel');
-
 // download stuff
 const request = require('request');
-
 // tty input
 const prompt = require('prompt');
-
-
-
-
+// message prefix
 prompt.message = chalk.cyanBright("Lige et hurtigt spørgsmål!");
-
-
-
-
-
-
 // contains instructions for CLI.
 const cli = meow(`
     Usage
@@ -56,6 +38,8 @@ const cli = meow(`
     }
 });
 
+
+
 // error throwy
 const throwError = (err) => {
   //throw err;
@@ -63,9 +47,6 @@ const throwError = (err) => {
   throw err;
   process.exit();
 }
-
-
-
 
 // function to turn relative paths into absolute remote paths
 const remotify = (filename, endpoint) => {
@@ -168,8 +149,30 @@ fs.readFile('./index.html', 'utf-8', (err, data) => {
       }
     });
     newDoc("body").append($("#animation_container"));
+
+    var scriptsToLoad = 0;
+    var scriptLoaderTag = "";
+    function createScriptLoader(script){
+      scriptsToLoad++;
+      script = script.match(/\/(.*)/)[1];
+      if(scriptsToLoad > 1){
+        scriptLoaderTag += `
+          var script${scriptsToLoad} = document.createElement('script');
+          script${scriptsToLoad-1}.onload = function () {
+             script${scriptsToLoad}.src = '${endpoint}${script}';
+             document.head.appendChild(script${scriptsToLoad});
+          }
+        `;
+      } else {
+        scriptLoaderTag += `var script${scriptsToLoad} = document.createElement('script');
+            script${scriptsToLoad}.src = '${endpoint}${script}';
+            document.head.appendChild(script${scriptsToLoad});
+        `;
+      }
+    }
     $("script").each( function(index, element){
       if(element.attribs.src){
+        
         // attempt to localize the animate dependencies - fight the power of centralized cdn's
         try {
           const cdnURL = new URL(element.attribs.src);
@@ -180,9 +183,14 @@ fs.readFile('./index.html', 'utf-8', (err, data) => {
         } catch (e){
           // could not download dependency... (probably already local include)
         }
-        if(element.attribs.src !== cdnDone){
+
+        // we're gonna assume that the animate .js always comes first...
+        if(element.attribs.src.indexOf(cdnDone) < 0 && cdnDone.length > 0 && animateScript == null){
           animateScript = element.attribs.src
+          console.log(animateScript)
           remotify(element.attribs.src, endpoint);
+        } else if(element.attribs.src.indexOf(cdnDone) < 0) {
+          createScriptLoader(element.attribs.src);
         }
       }
       if(element.children.length > 0){
@@ -193,11 +201,27 @@ fs.readFile('./index.html', 'utf-8', (err, data) => {
     })
     process.nextTick(function(){
       let HTMLdata = $.html();
+
+
+
+
+      var vendorLoader;
+      if(scriptsToLoad > 0){
+        vendorLoader = `
+        ${scriptLoaderTag}
+        var vendor_script = document.createElement('script');
+        script${scriptsToLoad}.onload = function () {
+          vendor_script.src = '${endpoint}${cdnDone}';
+          document.head.appendChild(vendor_script);
+        }`;
+      } else {
+        vendorLoader = `var vendor_script = document.createElement('script');
+        vendor_script.src = '${endpoint}${cdnDone}';
+        document.head.appendChild(vendor_script);`;
+      }
       newDoc("body").append(`
       <script>
-        var vendor_script = document.createElement('script');
-        vendor_script.src = '${endpoint}${cdnDone}';
-        document.head.appendChild(vendor_script);
+        ${vendorLoader}
         var animateScript = document.createElement('script');
         vendor_script.onload = function () {
             animateScript.src = '${endpoint}${animateScript}';
