@@ -148,6 +148,10 @@ fs.readFile('./index.html', 'utf-8', (err, data) => {
         }
       }
     });
+    if($("#_preload_div_").length > 0){
+      $("#_preload_div_").find("img").src = endpoint+$("#_preload_div_").find("img")[0].src;
+      newDoc("body").append($("#_preload_div_"));
+    }
     newDoc("body").append($("#animation_container"));
 
     var scriptsToLoad = 0;
@@ -155,18 +159,19 @@ fs.readFile('./index.html', 'utf-8', (err, data) => {
     function createScriptLoader(script){
       scriptsToLoad++;
       script = script.match(/\/(.*)/)[1];
+      fs.createReadStream(script).pipe(fs.createWriteStream('./processed/'+script));
       if(scriptsToLoad > 1){
         scriptLoaderTag += `
-          var script${scriptsToLoad} = document.createElement('script');
-          script${scriptsToLoad-1}.onload = function () {
-             script${scriptsToLoad}.src = '${endpoint}${script}';
-             document.head.appendChild(script${scriptsToLoad});
-          }
+        var script${scriptsToLoad} = document.createElement('script');
+        script${scriptsToLoad-1}.onload = function () {
+           script${scriptsToLoad}.src = '${endpoint}${script}';
+           document.head.appendChild(script${scriptsToLoad});
+        }
         `;
       } else {
         scriptLoaderTag += `var script${scriptsToLoad} = document.createElement('script');
-            script${scriptsToLoad}.src = '${endpoint}${script}';
-            document.head.appendChild(script${scriptsToLoad});
+        script${scriptsToLoad}.src = '${endpoint}${script}';
+        document.head.appendChild(script${scriptsToLoad});
         `;
       }
     }
